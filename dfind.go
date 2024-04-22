@@ -15,6 +15,11 @@ type File struct {
 	hash string
 }
 
+type Repeat struct {
+	hash  string
+	files []string
+}
+
 func ForceExit(f *os.File, msg string, status int) {
 	fmt.Fprint(f, msg)
 	os.Exit(status)
@@ -49,6 +54,14 @@ func GetMD5(location string) (string, error) {
 	}
 
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
+func Duplicates() []Repeat {
+	return nil
+}
+
+func FormatPrint(rps []Repeat) {
+
 }
 
 func main() {
@@ -97,5 +110,6 @@ func main() {
 		}
 	}
 
-	fmt.Println(files)
+	rps := Duplicates()
+	FormatPrint(rps)
 }
