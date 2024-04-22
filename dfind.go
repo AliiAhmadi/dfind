@@ -9,6 +9,17 @@ import (
 	"path/filepath"
 )
 
+const escape = "\x1b"
+
+const (
+	NONE = iota
+	RED
+	GREEN
+	YELLOW
+	BLUE
+	PURPLE
+)
+
 type File struct {
 	info fs.FileInfo
 	path string
@@ -56,12 +67,53 @@ func GetMD5(location string) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func Duplicates() []Repeat {
-	return nil
+func Duplicates(fs []File) []Repeat {
+	mp := map[string][]string{}
+
+	for _, f := range fs {
+		if _, ok := mp[f.hash]; ok {
+			mp[f.hash] = append(mp[f.hash], f.path)
+			continue
+		}
+
+		mp[f.hash] = make([]string, 0)
+		mp[f.hash] = append(mp[f.hash], f.path)
+	}
+
+	res := make([]Repeat, 0)
+	for hash, items := range mp {
+		if len(items) > 1 {
+			res = append(res, Repeat{
+				hash:  hash,
+				files: items,
+			})
+		}
+	}
+
+	return res
 }
 
 func FormatPrint(rps []Repeat) {
+	for _, rp := range rps {
+		fmt.Print(formatColor(RED, fmt.Sprintf("\t\tHash value: (%v)\n", rp.hash)))
+		for _, p := range rp.files {
+			fmt.Print(formatColor(GREEN, fmt.Sprintf("\t%v\n", p)))
+		}
 
+		fmt.Print("\n\n")
+	}
+}
+
+func color(c int) string {
+	if c == NONE {
+		return fmt.Sprintf("%s[%dm", escape, c)
+	}
+
+	return fmt.Sprintf("%s[3%dm", escape, c)
+}
+
+func formatColor(c int, text string) string {
+	return color(c) + text + color(NONE)
 }
 
 func main() {
@@ -110,6 +162,6 @@ func main() {
 		}
 	}
 
-	rps := Duplicates()
+	rps := Duplicates(files)
 	FormatPrint(rps)
 }
