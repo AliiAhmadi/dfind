@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/md5"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -34,6 +36,21 @@ func Unique[T comparable](values []T) []T {
 	return res
 }
 
+func GetMD5(location string) (string, error) {
+	f, err := os.Open(location)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	h := md5.New()
+	if _, err = io.Copy(h, f); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
 func main() {
 	dirs := make([]string, 0)
 	files := make([]File, 0)
@@ -61,10 +78,15 @@ func main() {
 			}
 
 			if !info.IsDir() {
+				h, err := GetMD5(path)
+				if err != nil {
+					ForceExit(os.Stderr, err.Error(), 1)
+				}
+
 				files = append(files, File{
 					info: info,
 					path: path,
-					hash: "",
+					hash: h,
 				})
 			}
 			return nil
